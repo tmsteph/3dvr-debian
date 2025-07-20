@@ -1,7 +1,8 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>3dvr Browser Linux</title>
+  <title>3dvr Browser Linux (Mobile Friendly)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     html, body {
@@ -27,6 +28,7 @@
       margin-bottom: 1em;
       font-size: 1.5em;
       color: #0f0;
+      text-align: center;
     }
     .bar-container {
       width: 80%;
@@ -50,64 +52,66 @@
 </head>
 <body>
   <div id="loading-screen">
-    <h1>Booting 3dvr Linux...</h1>
+    <h1 id="status-text">Booting 3dvr Linux...</h1>
     <div class="bar-container"><div class="bar" id="progress-bar"></div></div>
   </div>
-  <script src="https://copy.sh/v86/build/libv86.js"></script>
+
+  <script src="https://v86.bsd.ac/libv86.js"></script>
   <script>
     const progressBar = document.getElementById("progress-bar");
-    const statusText = document.querySelector("#loading-screen h1");function updateProgress(e, label) {
-  if (e.lengthComputable) {
-    const percent = (e.loaded / e.total * 100).toFixed(0);
-    progressBar.style.width = percent + "%";
-    statusText.textContent = `Loading ${label}... ${percent}%`;
-    console.log(`${label} - ${percent}%`);
-  } else {
-    statusText.textContent = `Loading ${label}...`;
-    progressBar.style.width = "20%"; // fallback for unknown size
-    console.log(`${label} - unknown size`);
-  }
-}
+    const statusText = document.getElementById("status-text");
 
-const emulator = new V86Starter({
-  wasm_path: "https://copy.sh/v86/build/v86.wasm",
-  memory_size: 128 * 1024 * 1024,
-  vga_memory_size: 2 * 1024 * 1024,
-  screen_container: document.body,
-  bios: {
-    url: "https://copy.sh/v86/bios/seabios.bin",
-    progress: (e) => updateProgress(e, 'BIOS')
-  },
-  vga_bios: {
-    url: "https://copy.sh/v86/bios/vgabios.bin",
-    progress: (e) => updateProgress(e, 'VGA BIOS')
-  },
-  cdrom: {
-    url: "https://copy.sh/v86/images/linux.iso",
-    progress: (e) => updateProgress(e, 'Linux ISO')
-  },
-  autostart: true
-});
+    function updateProgress(e, label) {
+      if (e.lengthComputable) {
+        const percent = (e.loaded / e.total * 100).toFixed(0);
+        progressBar.style.width = percent + "%";
+        statusText.textContent = `Loading ${label}... ${percent}%`;
+        console.log(`${label}: ${percent}%`);
+      } else {
+        statusText.textContent = `Loading ${label}...`;
+        progressBar.style.width = "20%";
+        console.log(`${label}: unknown size`);
+      }
+    }
 
-emulator.add_listener("download-start", ({ file }) => {
-  console.log(`Started downloading: ${file}`);
-});
+    const emulator = new V86Starter({
+      wasm_path: "https://v86.bsd.ac/v86.wasm",
+      memory_size: 128 * 1024 * 1024,
+      vga_memory_size: 2 * 1024 * 1024,
+      screen_container: document.body,
+      bios: {
+        url: "https://v86.bsd.ac/seabios.bin",
+        progress: (e) => updateProgress(e, 'BIOS')
+      },
+      vga_bios: {
+        url: "https://v86.bsd.ac/vgabios.bin",
+        progress: (e) => updateProgress(e, 'VGA BIOS')
+      },
+      cdrom: {
+        url: "https://v86.bsd.ac/images/linux.iso",
+        progress: (e) => updateProgress(e, 'Linux ISO')
+      },
+      autostart: true
+    });
 
-emulator.add_listener("download-end", ({ file }) => {
-  console.log(`Finished downloading: ${file}`);
-});
+    emulator.add_listener("emulator-ready", function () {
+      document.getElementById("loading-screen").style.display = "none";
+      console.log("✅ Emulator is ready!");
+    });
 
-emulator.add_listener("emulator-ready", function () {
-  document.getElementById("loading-screen").style.display = "none";
-  console.log("✅ Emulator is ready!");
-});
+    emulator.add_listener("error", function (err) {
+      console.error("❌ Emulator error:", err);
+      statusText.textContent = "❌ Emulator failed to start.";
+      progressBar.style.background = "red";
+    });
 
-emulator.add_listener("error", function (err) {
-  console.error("Emulator error:", err);
-  statusText.textContent = "❌ Emulator failed to start.";
-  progressBar.style.background = "red";
-});
+    emulator.add_listener("download-start", ({ file }) => {
+      console.log(`⬇️ Started downloading: ${file}`);
+    });
 
+    emulator.add_listener("download-end", ({ file }) => {
+      console.log(`✅ Finished downloading: ${file}`);
+    });
   </script>
 </body>
 </html>
