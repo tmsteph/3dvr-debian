@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>3dvr Browser Debian</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #111; }
+    canvas { display: block; width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+  <script src="https://copy.sh/v86/build/libv86.js"></script>
+  <script>
+    const emulator = new V86Starter({
+      wasm_path: "https://copy.sh/v86/build/v86.wasm",
+      memory_size: 256 * 1024 * 1024,
+      vga_memory_size: 8 * 1024 * 1024,
+      screen_container: document.body,
+      bios: { url: "https://copy.sh/v86/bios/seabios.bin" },
+      vga_bios: { url: "https://copy.sh/v86/bios/vgabios.bin" },
+      hda: { url: "https://copy.sh/v86/images/debian.img" },
+    });
+  </script>
+</body>
+</html>
