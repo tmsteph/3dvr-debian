@@ -1,46 +1,88 @@
 <!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
   <title>3dvr Browser Linux</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     html, body {
       margin: 0;
       height: 100%;
       background: #000;
       overflow: hidden;
+      font-family: monospace;
+      color: #0f0;
+    }
+    #loading-screen {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      z-index: 10;
+    }
+    #loading-screen h1 {
+      margin-bottom: 1em;
+      font-size: 1.5em;
+      color: #0f0;
+    }
+    .bar-container {
+      width: 80%;
+      background: #333;
+      border-radius: 5px;
+      overflow: hidden;
+      height: 12px;
+    }
+    .bar {
+      width: 0%;
+      height: 100%;
+      background: #0f0;
+      transition: width 0.2s ease-in-out;
     }
     canvas {
+      width: 100%;
+      height: 100%;
       display: block;
-      width: 100vw;
-      height: 100vh;
-    }
-    #loading {
-      color: lime;
-      font-family: monospace;
-      text-align: center;
-      padding-top: 2em;
     }
   </style>
 </head>
 <body>
-  <div id="loading">Loading virtual machine...</div>
-  <script src="https://copy.sh/v86/build/libv86.js"></script>
-  <script>
-    const container = document.body;
+  <div id="loading-screen">
+    <h1>Booting 3dvr Linux...</h1>
+    <div class="bar-container"><div class="bar" id="progress-bar"></div></div>
+  </div>  <script src="https://copy.sh/v86/build/libv86.js"></script>  <script>
+    function updateProgress(e, label) {
+      if (e.lengthComputable) {
+        const percent = (e.loaded / e.total * 100).toFixed(0);
+        document.getElementById("progress-bar").style.width = percent + "%";
+        document.querySelector("#loading-screen h1").textContent = `Loading ${label}... ${percent}%`;
+      }
+    }
+
     const emulator = new V86Starter({
       wasm_path: "https://copy.sh/v86/build/v86.wasm",
       memory_size: 128 * 1024 * 1024,
       vga_memory_size: 2 * 1024 * 1024,
-      screen_container: container,
-      bios: { url: "https://copy.sh/v86/bios/seabios.bin" },
-      vga_bios: { url: "https://copy.sh/v86/bios/vgabios.bin" },
-      cdrom: { url: "https://copy.sh/v86/images/linux.iso" },
+      screen_container: document.body,
+      bios: {
+        url: "https://copy.sh/v86/bios/seabios.bin",
+        progress: (e) => updateProgress(e, 'BIOS')
+      },
+      vga_bios: {
+        url: "https://copy.sh/v86/bios/vgabios.bin",
+        progress: (e) => updateProgress(e, 'VGA BIOS')
+      },
+      cdrom: {
+        url: "https://copy.sh/v86/images/linux.iso",
+        progress: (e) => updateProgress(e, 'Linux ISO')
+      },
       autostart: true
-    });emulator.add_listener("emulator-ready", function() {
-  document.getElementById("loading").remove();
-});
+    });
 
-  </script>
-</body>
+    emulator.add_listener("emulator-ready", function() {
+      document.getElementById("loading-screen").style.display = "none";
+    });
+  </script></body>
 </html>
